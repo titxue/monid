@@ -6,4 +6,4 @@
 - [x] Add authenticated HTTP API, MCP tools, and browser console.
 - [x] Add Docker Compose, configuration example, and self-hosting guide.
 - [x] Verify upstream checks, gateway integration tests, and actual deployment.
-- [ ] Push the implementation and create a reviewable PR in the fork.
+- [x] Push the implementation and create a reviewable PR in the fork (https://github.com/titxue/monid/pull/1).
