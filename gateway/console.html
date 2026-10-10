@@ -1,0 +1,415 @@
+<!doctype html>
+<html lang="zh-CN">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Monid · 自托管工具网关</title>
+    <style>
+    :root {
+        font: 15px/1.6 system-ui,-apple-system,sans-serif;
+        color: #202c36;
+        background: #f5f6f8;
+    }
+    * {
+        box-sizing: border-box;
+    }
+    body {
+        margin: 0;
+    }
+    main {
+        max-width: 1200px;
+        margin: auto;
+        padding: 32px 24px;
+    }
+    h1 {
+        font-size: 28px;
+        letter-spacing: -.7px;
+        margin: 0;
+    }
+    h2 {
+        font-size: 18px;
+        margin: 0 0 14px;
+    }
+    .muted {
+        color: #687582;
+        font-size: 13px;
+    }
+    header {
+        margin-bottom: 24px;
+    }
+    section {
+        background: #fff;
+        border: 1px solid #e0e5ea;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 18px;
+    }
+    .row {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+    .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 18px;
+    }
+    input,
+    select,
+    textarea,
+    button {
+        font: inherit;
+        border: 1px solid #ccd4dd;
+        border-radius: 7px;
+        padding: 8px 11px;
+        background: white;
+        color: inherit;
+    }
+    input[type=password],
+    input[type=search] {
+        flex: 1;
+        min-width: 190px;
+    }
+    button {
+        cursor: pointer;
+    }
+    button.primary {
+        background: #244bd5;
+        color: white;
+        border-color: #244bd5;
+    }
+    button:disabled {
+        opacity: .5;
+        cursor: default;
+    }
+    button:focus-visible,
+    input:focus-visible,
+    textarea:focus-visible,
+    select:focus-visible {
+        outline: 3px solid #a3b8fb;
+        outline-offset: 2px;
+    }
+    textarea {
+        width: 100%;
+        min-height: 190px;
+        font: 13px/1.6 ui-monospace,monospace;
+        resize: vertical;
+    }
+    pre {
+        white-space: pre-wrap;
+        word-break: break-word;
+        font: 12px/1.6 ui-monospace,monospace;
+        max-height: 360px;
+        overflow: auto;
+        background: #f6f8fa;
+        border-radius: 7px;
+        padding: 12px;
+    }
+    .tool {
+        display: block;
+        text-align: left;
+        width: 100%;
+        margin: 8px 0;
+        padding: 12px;
+    }
+    .tool strong {
+        display: block;
+    }
+    .badge {
+        font-size: 12px;
+        color: #2c7353;
+    }
+    .tool[aria-pressed=true] {
+        border-color: #244bd5;
+        background: #f4f6ff;
+    }
+    #tools {
+        max-height: 600px;
+        overflow: auto;
+    }
+    #notice {
+        min-height: 26px;
+        color: #974921;
+        margin: 12px 0;
+    }
+    label {
+        font-size: 13px;
+    }
+    .history {
+        width: 100%;
+        font-size: 12px;
+        text-align: left;
+        border-collapse: collapse;
+    }
+    .history td,
+    .history th {
+        padding: 9px 6px;
+        border-bottom: 1px solid #e5e9ee;
+    }
+    .history button {
+        font-size: 12px;
+        padding: 3px 7px;
+    }
+    .empty {
+        color: #687582;
+        padding: 24px 0;
+    }
+    .run-actions {
+        margin: 12px 0;
+    }
+    @media (max-width:760px) {
+        .grid {
+            grid-template-columns: 1fr;
+        }
+        main {
+            padding: 20px 14px;
+        }
+    }
+    </style>
+    <main>
+        <header>
+            <h1>Monid <span class="muted">自托管工具网关</span></h1>
+            <p class="muted">发现工具，查看参数，用自己的供应商账户执行。</p>
+        </header>
+        <section>
+            <div
+                class="row"><input id="token" type="password" aria-label="网关 API Key" placeholder="输入网关 API Key"><button id="connect" class="primary">连接网关</button><span id="connection" class="muted">尚未连接</span></div>
+            <p
+                class="muted">密钥仅保留在当前页面内存中。MCP 地址：<code id="mcp-url"></code></p>
+        </section>
+        <div id="notice" role="status" aria-live="polite"></div>
+        <div class="grid">
+            <section>
+                <h2>工具目录</h2>
+                <form id="search-form">
+                    <div
+                        class="row"><input id="query" type="search" aria-label="搜索工具" placeholder="试试 twitter、网页搜索、视频"><button type="submit">搜索</button></div>
+                    <div class="row"
+                        style="margin-top:10px"><select id="provider" aria-label="供应商"><option value="">全部供应商</option></select><label><input type="checkbox" id="configured"> 仅显示可执行工具</label></div>
+                </form>
+                <p id="count" class="muted">连接后可浏览目录</p>
+                <div id="tools">
+                    <p class="empty">使用网关 API Key 连接。</p>
+                </div>
+            </section>
+            <section><h2 id="selected-name">工具详情</h2><p id="summary" class="muted">先从目录中选择工具。</p><details><summary>参数结构与用量规则</summary><pre id="schema">尚未选择工具</pre></details><label for="input">执行参数（JSON）</label><textarea id="input" spellcheck="false">{"body":{}}</textarea><div class="row run-actions"><button id="estimate" disabled>预估用量</button><button id="run" class="primary" disabled>执行工具</button><button id="stop" disabled>停止任务</button></div><p class="muted">执行可能产生供应商费用。用量使用供应商原有单位；停止结果以任务最终状态为准。</p><pre id="output" aria-live="polite">尚未执行</pre></section>
+        </div>
+        <section>
+            <div
+                class="row"><h2 style="margin:0">最近运行</h2><button id="refresh">刷新</button></div>
+            <div id="history">
+                <p class="empty">尚无运行记录。</p>
+            </div>
+        </section>
+    </main>
+    <script>
+    const $ = (id) => document.getElementById(id);
+    let token = "", selected = null, currentRun = null, pollTimer = null;
+    $("mcp-url").textContent = location.origin + "/mcp";
+    function notice(message) {
+        $("notice").textContent = message || "";
+    }
+    async function api(path, body) {
+        if (!token) throw Error("请先连接网关。");
+        const response = await fetch(path, {
+            method: body === undefined ? "GET" : "POST",
+            headers: {
+                authorization: "Bearer " + token,
+                "content-type": "application/json",
+            },
+            body: body === undefined ? undefined : JSON.stringify(body),
+        });
+        const data = await response.json();
+        if (!response.ok) throw Error(data.message || data.code);
+        return data;
+    }
+    function show(value) {
+        $("output").textContent = JSON.stringify(value, null, 2);
+    }
+    async function action(fn) {
+        notice("");
+        try {
+            await fn();
+        } catch (error) {
+            notice(error.message);
+        }
+    }
+    async function search() {
+        const data = await api("/v1/discover", {
+            query: $("query").value,
+            provider: $("provider").value || undefined,
+            configuredOnly: $("configured").checked,
+            limit: 40,
+        });
+        $("count").textContent =
+            `找到 ${data.total} 个工具 · 显示 ${data.results.length} 个 · 本地关键词搜索`;
+        $("tools").replaceChildren();
+        for (const tool of data.results) {
+            const button = document.createElement("button");
+            button.className = "tool";
+            button.dataset.endpointId = tool.id;
+            button.setAttribute("aria-pressed", String(selected?.id === tool.id));
+            const title = document.createElement("strong");
+            title.textContent = tool.name;
+            const description = document.createElement("div");
+            description.className = "muted";
+            description.textContent = tool.description;
+            const badge = document.createElement("span");
+            badge.className = "badge";
+            badge.textContent = tool.runnable
+                ? "可执行"
+                : !tool.supported
+                ? "暂不支持资源管理"
+                : "需要供应商密钥";
+            button.append(title, description, badge);
+            button.onclick = () => action(() => inspect(tool.id));
+            $("tools").append(button);
+        }
+        if (!data.results.length) {
+            const empty = document.createElement("p");
+            empty.className = "empty";
+            empty.textContent =
+                "未找到工具。可更换关键词或取消“仅显示可执行工具”。";
+            $("tools").append(empty);
+        }
+    }
+    function sample(schema) {
+        if (schema?.default !== undefined) return schema.default;
+        if (schema?.enum) return schema.enum[0];
+        if (schema?.type === "object") {
+            const value = {};
+            for (const name of schema.required || []) {
+                value[name] = sample(schema.properties?.[name]);
+            }
+            return value;
+        }
+        if (schema?.type === "array") return [];
+        if (schema?.type === "number" || schema?.type === "integer") {
+            return Math.max(schema.minimum ?? 1, 1);
+        }
+        if (schema?.type === "boolean") return false;
+        return "";
+    }
+    async function inspect(id) {
+        selected = await api("/v1/inspect", { id });
+        $("selected-name").textContent = selected.displayName;
+        $("summary").textContent = selected.summary + " · " + selected.id;
+        $("schema").textContent = JSON.stringify(selected, null, 2);
+        const input = {};
+        for (const part of ["body", "queryParams", "pathParams"]) {
+            if (selected.input[part]) input[part] = sample(selected.input[part]);
+        }
+        $("input").value = JSON.stringify(input, null, 2);
+        $("estimate").disabled = false;
+        $("run").disabled = !selected.runnable;
+        for (const button of $("tools").children) {
+            button.setAttribute(
+                "aria-pressed",
+                String(button.dataset.endpointId === selected.id),
+            );
+        }
+        if (!selected.runnable) {
+            notice(
+                selected.unavailableReason ||
+                    "请在服务端 .env 中配置：" +
+                        selected.credentialEnvVars.join(", "),
+            );
+        }
+    }
+    async function history() {
+        const data = await api("/v1/runs?limit=20");
+        const table = document.createElement("table");
+        table.className = "history";
+        const header = table.insertRow();
+        for (const text of ["工具", "状态", "创建时间", ""]) {
+            const th = document.createElement("th");
+            th.textContent = text;
+            header.append(th);
+        }
+        for (const run of data.items) {
+            const row = table.insertRow();
+            for (
+                const text of [
+                    run.endpointId,
+                    run.isProviderError ? "供应商返回错误" : run.status,
+                    new Date(run.createdAt).toLocaleString(),
+                ]
+            ) row.insertCell().textContent = text;
+            const button = document.createElement("button");
+            button.textContent = "查看";
+            button.onclick = () => action(() => track(run.runId));
+            row.insertCell().append(button);
+        }
+        $("history").replaceChildren(table);
+    }
+    async function track(id) {
+        clearTimeout(pollTimer);
+        currentRun = id;
+        const data = await api("/v1/runs/" + id);
+        show(data);
+        $("stop").disabled = !data.stoppable;
+        if (["STARTING", "RUNNING", "STOPPING"].includes(data.status)) {
+            pollTimer = setTimeout(() => action(() => track(id)), 1500);
+        } else {
+            currentRun = null;
+            await history();
+        }
+    }
+    $("connect").onclick = () =>
+        action(async () => {
+            clearTimeout(pollTimer);
+            token = $("token").value.trim();
+            const data = await api("/v1/providers");
+            $("provider").replaceChildren(new Option("全部供应商", ""));
+            for (const p of data.providers) {
+                $("provider").append(
+                    new Option(
+                        p.displayName + (p.configured ? " · 已配置" : ""),
+                        p.provider,
+                    ),
+                );
+            }
+            $("connection").textContent = "已连接 · " + data.providers.filter((p) =>
+                p.configured
+            ).length + " 个供应商已配置";
+            $("token").value = "";
+            await search();
+            await history();
+        });
+    $("search-form").onsubmit = (event) => {
+        event.preventDefault();
+        action(search);
+    };
+    $("provider").onchange = () => action(search);
+    $("configured").onchange = () => action(search);
+    $("estimate").onclick = () =>
+        action(async () =>
+            show(
+                await api("/v1/estimate", {
+                    id: selected.id,
+                    input: JSON.parse($("input").value),
+                }),
+            )
+        );
+    $("run").onclick = () =>
+        action(async () => {
+            const input = JSON.parse($("input").value);
+            $("run").disabled = true;
+            try {
+                const data = await api("/v1/run", { id: selected.id, input });
+                await track(data.runId);
+                await history();
+            } finally {
+                $("run").disabled = !selected?.runnable;
+            }
+        });
+    $("stop").onclick = () =>
+        action(async () => {
+            if (currentRun) {
+                await api("/v1/runs/" + currentRun + "/stop", {});
+                await track(currentRun);
+            }
+        });
+    $("refresh").onclick = () => action(history);
+    </script>
+</html>

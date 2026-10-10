@@ -22,7 +22,9 @@
         "webhook": "deno run --unstable-kv --allow-read --allow-write --allow-env --allow-net --allow-run=git,cloudflared,tailscale scripts/webhook.ts",
         "apify:scaffold": "deno run --allow-read --allow-write --allow-env --allow-net=api.apify.com scripts/apify-scaffold.ts",
         "engine:estimate": "deno run --allow-read --allow-write --allow-env scripts/estimate.ts",
-        "drift": "deno run --allow-read --allow-write --allow-env --allow-net=api.apify.com --allow-run=deno,git scripts/drift.ts"
+        "drift": "deno run --allow-read --allow-write --allow-env --allow-net=api.apify.com --allow-run=deno,git scripts/drift.ts",
+        "gateway": "deno run --env-file=.env --allow-read --allow-write=.output --allow-env --allow-net --allow-run=git gateway/main.ts",
+        "gateway:test": "deno test --allow-read --allow-env --allow-write --allow-net=127.0.0.1 gateway/"
     },
     "imports": {
         "@cliffy/command": "jsr:@cliffy/command@^1.2.1",
@@ -43,7 +45,11 @@
         "@shared/core": "./shared/core/mod.ts",
         "@shared/logging": "./shared/logging/mod.ts",
         "pino": "npm:pino@^10.3.1",
-        "canonicalize": "npm:canonicalize@^2.1.0"
+        "canonicalize": "npm:canonicalize@^2.1.0",
+        "@mcp/sdk/server/mcp.js": "npm:@modelcontextprotocol/sdk@1.32.1/server/mcp.js",
+        "@mcp/sdk/server/webStandardStreamableHttp.js": "npm:@modelcontextprotocol/sdk@1.32.1/server/webStandardStreamableHttp.js",
+        "@mcp/sdk/client/index.js": "npm:@modelcontextprotocol/sdk@1.32.1/client/index.js",
+        "@mcp/sdk/client/streamableHttp.js": "npm:@modelcontextprotocol/sdk@1.32.1/client/streamableHttp.js"
     },
     "fmt": {
         "indentWidth": 4,
