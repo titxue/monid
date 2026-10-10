@@ -1,3 +1,11 @@
+# Self-hosted gateway fork
+
+This fork adds a single-user HTTP/MCP tool gateway, browser console, persistent
+run history, and Docker Compose deployment using your own provider API keys. See
+[自托管部署指南](SELF_HOSTING.md) for setup, API examples, and scope.
+
+The original connector framework and engine remain below.
+
 <p align="center">
   <a href="https://monid.ai"><img src="assets/monid-hero.png" alt="Monid at the centre, orbited by the tools it connects"></a>
 </p>
